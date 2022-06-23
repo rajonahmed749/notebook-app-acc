@@ -1,90 +1,134 @@
-import { StyleSheet, View, SafeAreaView, Platform, StatusBar, Image, TextInput, Pressable } from 'react-native';
+import { StyleSheet, View, SafeAreaView, Platform, StatusBar, Image, ScrollView, Pressable } from 'react-native';
 import React, { useState } from 'react';
 import Text from '../components/text/text';
 import Button from '../components/Button/Button';
 import Input from '../components/Input/input';
-// import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from '../../App';
+import { collection, addDoc } from "firebase/firestore";
+import { showMessage, hideMessage } from "react-native-flash-message";
+
+
 
 const genderOption = ['Male', 'Female']
-// const auth = getAuth();
 
 
-export default function Signup() {
+export default function Signup({ navigation }) {
   const [gender, setGender] = useState(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
 
+  const [loading, setLoading] = useState(false)
 
-  const signUp = () => {
-    // createUserWithEmailAndPassword(auth, email, password)
-    //   .then((userCredential) => {
-    //     // Signed in 
-    //     const user = userCredential.user;
-    //     console.log(user)
-    //     // ...
-    //   })
-    //   .catch((error) => {
-    //     const errorCode = error.code;
-    //     const errorMessage = error.message;
-    //     console.log(errorCode, errorMessage)
-    //   });
-    alert('firebase will be added later')
+
+  const signUp = async () => {
+    setLoading(true)
+
+    try {
+
+      // 1. create user with email and password
+      const result = await createUserWithEmailAndPassword(auth, email, password)
+      console.log('this is user info ', result)
+
+      // 2. add user to firestore 
+      await addDoc(collection(db, 'users'), {
+        name: name,
+        email: email,
+        gender: gender,
+        age: age,
+        uid: result.user.uid
+      })
+      setLoading(false)
+
+    } catch (error) {
+      console.log("this is error ", error)
+      showMessage({
+        message: "Something wrong you are trying to do...",
+        type: "danger",
+      });
+      setLoading(false)
+    }
+
   }
+
+
+
+
+  // Old system to use this function 
+
+  // const signUp = () => {
+  //   createUserWithEmailAndPassword(auth, email, password)
+  //     .then((userCredential) => {
+  //       // Signed in 
+  //       const user = userCredential.user; 
+  //       console.log('this is user', user)
+  //       // ...
+  //     })
+  //     .catch((error) => {
+  //       const errorCode = error.code;
+  //       const errorMessage = error.message;
+  //       console.log(errorCode, errorMessage)
+  //     });
+  // }
 
 
   return (
     <SafeAreaView style={styles.AndroidSafeArea}>
+      <ScrollView>
 
-      <View style={{ paddingHorizontal: 16, paddingVertical: 25 }}>
-        <Input
-          placeholder="Email Address"
-          onChangeText={(text) => setEmail(text)}
-        />
-        <Input
-          placeholder="Password "
-          secureTextEntry
-          onChangeText={(text) => setPassword(text)}
-        />
-        <Input
-          placeholder="Full Name"
-          onChangeText={(text) => setName(text)}
-        />
-        <Input
-          placeholder="Age"
-          onChangeText={(text) => setAge(text)}
-        />
+        <View style={{ paddingHorizontal: 16, paddingVertical: 25 }}>
+          <Input
+            autoCapitalize={'none'}
+            placeholder="Email Address"
 
-        <View style={{ marginVertical: 15 }}>
-          <Text>Select gender</Text>
-        </View>
+            onChangeText={(text) => setEmail(text)}
+          />
+          <Input
+            placeholder="Password "
+            secureTextEntry
+            onChangeText={(text) => setPassword(text)}
+          />
+          <Input
+            placeholder="Full Name"
+            autoCapitalize={'words'}
+            onChangeText={(text) => setName(text)}
+          />
+          <Input
+            placeholder="Age"
+            onChangeText={(text) => setAge(text)}
+          />
 
-        {
-          genderOption.map((option) => {
-            const selected = option === gender;
-            return (
-              <Pressable
-                onPress={() => setGender(option)}
-                key={option}
-                style={styles.radioContainer}
-              >
-                <View
-                  style={[styles.outerCircle,
-                  selected && styles.selectedOuterCircle]}
+          <View style={{ marginVertical: 15 }}>
+            <Text>Select gender</Text>
+          </View>
+
+          {
+            genderOption.map((option) => {
+              const selected = option === gender;
+              return (
+                <Pressable
+                  onPress={() => setGender(option)}
+                  key={option}
+                  style={styles.radioContainer}
                 >
                   <View
-                    style={[styles.innerCircle,
-                    selected && styles.selectedInnerCircle]}
-                  />
-                </View>
-                <Text style={styles.radioText}>{option}</Text>
-              </Pressable>
-            )
-          })
-        }
+                    style={[styles.outerCircle,
+                    selected && styles.selectedOuterCircle]}
+                  >
+                    <View
+                      style={[styles.innerCircle,
+                      selected && styles.selectedInnerCircle]}
+                    />
+                  </View>
+                  <Text style={styles.radioText}>{option}</Text>
+                </Pressable>
+              )
+            })
+          }
 
-        {/* <Pressable style={styles.radioContainer}>
+          {/* <Pressable style={styles.radioContainer}>
           <View style={[styles.outerCircle, selected && styles.selectedOuterCircle]}>
             <View style={[styles.innerCircle, selected && styles.selectedInnerCircle]} />
           </View>
@@ -92,19 +136,22 @@ export default function Signup() {
         </Pressable>
          */}
 
-      </View>
+        </View>
 
-      <View style={styles.signupbutton}>
-        <Button
-          title={"Sign Up"}
-          customStyles={{ alignSelf: 'center', marginBottom: 50 }}
-          onPress={signUp}
-        />
-        <Pressable>
-          <Text>Already have an account? <Text style={{ color: 'green', fontWeight: 'bold' }}>Sign In</Text></Text>
-        </Pressable>
-      </View>
-
+        <View style={styles.signupbutton}>
+          <Button
+            title={"Sign Up"}
+            customStyles={{ alignSelf: 'center', marginBottom: 50 }}
+            onPress={signUp}
+          />
+          <Pressable
+            style={{ paddingBottom: 20 }}
+            onPress={() => { navigation.navigate('Signin') }}
+          >
+            <Text>Already have an account? <Text style={{ color: 'green', fontWeight: 'bold' }}>Sign In</Text></Text>
+          </Pressable>
+        </View>
+      </ScrollView>
     </SafeAreaView>
 
   )

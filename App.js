@@ -89,7 +89,10 @@ export default function App() {
                 {(props) => <Home {...props} user={user} />}
               </Stack.Screen>
               <Stack.Screen name="Edit" component={Edit} />
-              <Stack.Screen name="Create" component={Create} />
+              <Stack.Screen name='Create'>
+                {(props) => <Create {...props} user={user} />}
+              </Stack.Screen>
+
             </>
           ) : (
             <>

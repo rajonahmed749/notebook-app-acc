@@ -6,7 +6,7 @@ import { db } from '../../App';
 import { collection, addDoc } from "firebase/firestore";
 import { showMessage } from 'react-native-flash-message';
 
-export default function Create({navigation, user }) {
+export default function Create({ navigation, user }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false)
